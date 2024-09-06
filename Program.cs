@@ -5,57 +5,90 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-internal class Program
+
+namespace WORLDGAMDEVELOPMENT
 {
-    private static void Main(string[] args)
+    internal class Program
     {
-        Console.WriteLine("Hello, World!");
-        var host = CreateHostBuilder(args).Build();
+        private static async void Main(string[] args)
+        {
+            var host = CreateHostBuilder(args).Build();
 
-    }
-
-    #region CreateHostBuilder
-    public static IHostBuilder CreateHostBuilder(string[] args)
-    {
-        return Host.CreateDefaultBuilder(args)
-            .ConfigureServices((hostContext, services) =>
+            using (var scope = host.Services.CreateScope())
             {
-                //var configuration = hostContext.Configuration;
-                //var appConfig = new AppConfig();
-                //configuration.Bind(appConfig);
-                //services.AddSingleton(appConfig);
+                var services = scope.ServiceProvider;
+                var databaseService = services.GetRequiredService<DatabaseService>();
+
+                await databaseService.MigrateAsync();
+
+                var userList = await databaseService.LoadUserListAsync();
+                Dictionary<long, AppUser> adminList = new();
+
+                var updateDispatcher = new UpdateDispatcher();
+
+                var bot = services.GetRequiredService<TelegramBotClient>();
+                var me = await bot.GetMeAsync();
+
+                ReceiverOptions receiverOptions = new ReceiverOptions();
+                using var cts = new CancellationTokenSource();
+
+                bot.StartReceiving(updateHandler: updateDispatcher, 
+                    receiverOptions: receiverOptions,
+                    cancellationToken: cts.Token);
+
+                IMessageHandler userMessageHandler = new UserMessageHandler(bot, databaseService, userList, adminList);
+
+                updateDispatcher.AddHandler(userMessageHandler);
+                await Console.Out.WriteLineAsync($"Начало работы бота {me.Username}");
+            }
+
+            await host.RunAsync();
+        }
+
+        #region CreateHostBuilder
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                {
+                    var configuration = hostContext.Configuration;
+                    var appConfig = new AppConfig();
+                    configuration.Bind(appConfig);
+                    services.AddSingleton(appConfig);
 
 
-                //if (appConfig?.ConnectionStrings == null)
-                //{
-                //    throw new InvalidOperationException("ConnectionStrings is not configured.");
-                //}
+                    if (appConfig?.ConnectionStrings == null)
+                    {
+                        throw new InvalidOperationException("ConnectionStrings is not configured.");
+                    }
 
-                //var connectionDefault = appConfig.ConnectionStrings["ConnectionDefault"];
+                    var connectionDefault = appConfig.ConnectionStrings["ConnectionDefault"];
 
-                //if (string.IsNullOrEmpty(connectionDefault))
-                //{
-                //    throw new InvalidOperationException("ConnectionDefault is not set.");
-                //}
+                    if (string.IsNullOrEmpty(connectionDefault))
+                    {
+                        throw new InvalidOperationException("ConnectionDefault is not set.");
+                    }
 
-                //services.AddDbContext<ApplicationDbContext>(options =>
-                //    options.UseMySql(connectionDefault));
+                    services.AddDbContext<ApplicationDbContext>(options =>
+                        options.UseMySql(connectionDefault, serverVersion: ServerVersion.AutoDetect(connectionDefault)));
 
-                //services.AddSingleton((provider) =>
-                //{
-                //    var appConfig = provider.GetRequiredService<AppConfig>();
-                //    var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
-                //    return new DatabaseService(appConfig, dbContext);
+                    services.AddSingleton((provider) =>
+                    {
+                        var appConfig = provider.GetRequiredService<AppConfig>();
+                        var dbContext = provider.GetRequiredService<ApplicationDbContext>();
 
-                //});
+                        return new DatabaseService(appConfig, dbContext);
+                    });
 
-                //services.AddSingleton((provider) =>
-                //{
-                //    var appConfig = provider.GetRequiredService<AppConfig>();
-                //    return new TelegramBotClient(appConfig.BotKeyRelease);
-                //});
-            });
+                    services.AddSingleton((provider) =>
+                    {
+                        var appConfig = provider.GetRequiredService<AppConfig>();
+                        return new TelegramBotClient(appConfig.BotKeyRelease
+                            ?? throw new Exception("Not set Telegram bot key AppConfig"));
+                    });
+                });
+        }
+        #endregion
     }
-    #endregion
 }
