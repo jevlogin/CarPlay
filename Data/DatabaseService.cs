@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Telegram.Bot.Types;
 
 namespace WORLDGAMDEVELOPMENT
 {
@@ -53,6 +54,21 @@ namespace WORLDGAMDEVELOPMENT
                 Console.WriteLine($"Error DataBase Migrate: {ex}");
                 throw;
             }
+        }
+
+        internal async Task AddUserAsync(AppUser user)
+        {
+            var userInServer = await _dbContext.Users.FindAsync(user.Id);
+            if (userInServer == null)
+            {
+                await _dbContext.Users.AddAsync(user);
+            }
+            else
+            {
+                _dbContext.Entry(userInServer).CurrentValues.SetValues(user);
+            }
+
+            await _dbContext.SaveChangesAsync();
         }
 
         #endregion

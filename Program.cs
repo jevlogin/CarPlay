@@ -4,13 +4,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 
 namespace WORLDGAMDEVELOPMENT
 {
     internal class Program
     {
-        private static async void Main(string[] args)
+        private static async Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
 
@@ -32,7 +33,7 @@ namespace WORLDGAMDEVELOPMENT
                 ReceiverOptions receiverOptions = new ReceiverOptions();
                 using var cts = new CancellationTokenSource();
 
-                bot.StartReceiving(updateHandler: updateDispatcher, 
+                bot.StartReceiving(updateHandler: updateDispatcher,
                     receiverOptions: receiverOptions,
                     cancellationToken: cts.Token);
 
@@ -69,9 +70,19 @@ namespace WORLDGAMDEVELOPMENT
                         throw new InvalidOperationException("ConnectionDefault is not set.");
                     }
 
-                    services.AddDbContext<ApplicationDbContext>(options =>
-                        options.UseMySql(connectionDefault, serverVersion: ServerVersion.AutoDetect(connectionDefault)));
+                    var serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
 
+
+                    services.AddDbContext<ApplicationDbContext>(options =>
+                        options.UseMySql(connectionDefault, serverVersion));
+
+                    //services.AddDbContext<ApplicationDbContext>(
+                    //    dbContextOptions => dbContextOptions
+                    //        .UseMySql(connectionDefault, serverVersion)
+                    //        .LogTo(Console.WriteLine, LogLevel.Information)
+                    //        .EnableSensitiveDataLogging()
+                    //        .EnableDetailedErrors()
+                    //);
 
                     services.AddSingleton((provider) =>
                     {

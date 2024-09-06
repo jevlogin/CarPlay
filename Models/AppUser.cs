@@ -6,12 +6,15 @@ namespace WORLDGAMDEVELOPMENT
     internal sealed class AppUser : User
     {
         #region Properties
-        
-        public long UserId { get; set; }
+
+        public long Id { get; set; }
         public string? TelegramUsername { get; set; }
         public string? Name { get; set; }
+        public new string? FirstName { get; set; }
+        public new string? LastName { get; set; }
         public string? Email { get; set; }
-        public string? Phone { get; set; } 
+        public string? Phone { get; set; }
+        public bool IsAdmin { get; set; } = false;
 
         #endregion
 
@@ -19,7 +22,7 @@ namespace WORLDGAMDEVELOPMENT
         #region override
         public override string ToString()
         {
-            return $"User ID: {UserId}\n" +
+            return $"User ID: {Id}\n" +
                    $"Telegram Username: {TelegramUsername}\n" +
                    $"First Name: {FirstName}\n" +
                    $"Last Name: {LastName}\n" +

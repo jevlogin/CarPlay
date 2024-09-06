@@ -3,17 +3,25 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 namespace WORLDGAMDEVELOPMENT
 {
     internal sealed class UserMessageHandler : IMessageHandler
     {
+        #region Fields
+
         private readonly Dictionary<long, AppUser> _adminList;
         private TelegramBotClient _bot;
         private DatabaseService _databaseService;
         private Dictionary<long, AppUser> _userList;
         private Dictionary<string, int> _buttonMsgId = new();
 
+        #endregion
+
+
+        #region ClassLifeCycles
 
         public UserMessageHandler(TelegramBotClient bot, DatabaseService databaseService, Dictionary<long, AppUser> userList, Dictionary<long, AppUser> adminList)
         {
@@ -23,7 +31,7 @@ namespace WORLDGAMDEVELOPMENT
             _adminList = adminList;
         }
 
-
+        #endregion
 
 
         #region IMessageHandler
@@ -168,7 +176,7 @@ namespace WORLDGAMDEVELOPMENT
                 case UpdateType.CallbackQuery:
                     if (update.CallbackQuery is not { } callbackQuery)
                         return;
-                    await HandleCallBackQuery(callbackQuery);
+                    await HandleCallBackQuery(callbackQuery, cancellationToken);
                     break;
                 case UpdateType.EditedMessage:
                     break;
@@ -194,16 +202,6 @@ namespace WORLDGAMDEVELOPMENT
         }
 
 
-
-        public bool IsCanHandle(long userId)
-        {
-            if (!_adminList.ContainsKey(userId))
-            {
-                return true;
-            }
-            return false;
-        }
-
         #endregion
 
 
@@ -212,83 +210,48 @@ namespace WORLDGAMDEVELOPMENT
             await Console.Out.WriteLineAsync($"{message.Text}");
 
             var userId = message.From.Id;
-            var isRegUser = _userList.ContainsKey(userId);
+            var isRegUser = false;
+
+            if (_userList.TryGetValue(userId, out var user) && !string.IsNullOrEmpty(user.Name))
+            {
+                isRegUser = true;
+            }
+
             if (isRegUser)
             {
-                await MsgHasReceived(message, canToken);
+                await ThirdMsgAfterRegister(message, canToken, user.Name);
             }
             else
             {
                 await SendMsgUnknowUser(message, userId, canToken);
             }
+        }
 
-            List<string> listPhones = new();
-            foreach (var admin in _adminList.Values)
+        private async Task ThirdMsgAfterRegister(Message message, CancellationToken canToken, string? name)
+        {
+            await Pause.Wait();
+            Console.WriteLine("Тут надо сделать 2 кнопки");
+            var replyMarkup = new InlineKeyboardMarkup(new[]
             {
-                if (admin.UserId == 0) continue;
-                if (!isRegUser)
-                    await _bot.SendTextMessageAsync(admin.UserId, $"{string.Format(DialogData.USER_HAS_ID, userId)} {DialogData.USER_HAS_NOT_REGISTER} ", cancellationToken: canToken);
-                else
-                    await _bot.SendTextMessageAsync(admin.UserId, $"{string.Format(DialogData.USER_HAS_ID, userId)} {DialogData.USER_HAS_REGISTER} ", cancellationToken: canToken);
-                await _bot.ForwardMessageAsync(admin.UserId, message.Chat.Id, message.MessageId, cancellationToken: canToken);
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Gurdini", "Gurdini"),
+                    InlineKeyboardButton.WithCallbackData("Carplay Adapter", "CarplayAdapter")
+                },
+            });
+            string msg = string.Format(DialogData.THIRD_MESSAGE, name);
+            var msgButton = await _bot.SendTextMessageAsync(message.Chat.Id, msg, replyMarkup: replyMarkup, cancellationToken: canToken);
 
-                if (admin.Phone is not { } phone) continue;
-                listPhones.Add(phone);
-            }
+            _buttonMsgId["productSelection"] = msgButton.MessageId;
 
-            if (isRegUser)
+        }
+
+        private async Task DeleteButtonMessageAsync(ChatId chatId)
+        {
+            if (_buttonMsgId.TryGetValue("productSelection", out int msgId))
             {
-                var currentDriver = _userList[userId];
-
-                //var cars = new List<string> { "car_1", "car_2", "car_3", "car_4", "car_5", "car_6", "car_7", "car_8", "car_9", "car_10" };
-                var cars = new List<string> { "A001AA 77", "B002BB 78", "C003CC 50", "E004EE 33", "K005KK 66", "M006MM 22", "H007HH 44", "P008PP 79", "T009TT 63", "X010XX 34" };
-
-                var rows = (int)Math.Ceiling((double)cars.Count / 3);
-                string prefics = $"car_selected_";
-
-                var keyBoardRows = new List<List<InlineKeyboardButton>>();
-                for (int i = 0; i < rows; i++)
-                {
-                    var row = cars.Skip(i * 3).Take(3).Select(car => new InlineKeyboardButton("Принять авто")
-                    {
-                        Text = car,
-                        CallbackData = $"{prefics}{car}"
-                    }).ToList();
-                    keyBoardRows.Add(row);
-                }
-                var backButton = new InlineKeyboardButton("Назад") { CallbackData = "back" };
-                var nextButton = new InlineKeyboardButton("Далее") { CallbackData = "next" };
-
-                keyBoardRows.Add(new List<InlineKeyboardButton> { backButton, nextButton });
-                var keyboard = new InlineKeyboardMarkup(keyBoardRows);
-
-                var webAppinfo = new WebAppInfo();
-                webAppinfo.Url = @"https://jevlogin.github.io/TruckBot/www/addUser.html";
-                var button = new KeyboardButton("👽 Принять авто");
-                button.WebApp = webAppinfo;
-                var replyKeyboard = new ReplyKeyboardMarkup(button) { ResizeKeyboard = true };
-                await _bot.SendTextMessageAsync(message.Chat.Id, "Чтобы выбрать авто, жмякай на кнопку", replyMarkup: replyKeyboard);
-
-                var webAppinfo2 = new WebAppInfo();
-                webAppinfo2.Url = @"https://ya.ru";
-                var button2 = new InlineKeyboardButton("Открыть форму");
-                button2.Url = webAppinfo2.Url;
-                var keyboard2 = new InlineKeyboardMarkup(button2);
-                var msg2 = await _bot.SendTextMessageAsync(message.Chat.Id, "Нажмите кнопку, чтобы открыть форму", replyMarkup: keyboard2);
-
-
-                var msg = await _bot.SendTextMessageAsync(message.Chat.Id,
-                   string.Format(DialogData.WELCOME_MESSAGE_DEFAULT, currentDriver.FirstName, currentDriver.UserId, currentDriver.LastName, listPhones.FirstOrDefault()),
-                   replyMarkup: keyboard);
-
-                _buttonMsgId.Clear();
-                cars.ForEach(car =>
-                {
-                    var tmpMsg = $"{prefics}{car}";
-                    Console.WriteLine(tmpMsg);
-                    _buttonMsgId.Add($"{prefics}{car}", msg.MessageId);
-                });
-
+                await _bot.DeleteMessageAsync(chatId, msgId);
+                _buttonMsgId.Remove("productSelection");
             }
         }
 
@@ -305,51 +268,59 @@ namespace WORLDGAMDEVELOPMENT
                     case "/start":
                         if (_userList.ContainsKey(message.From.Id))
                         {
-                            await _bot.SendTextMessageAsync(message.Chat.Id, "Не кипишуй, бронируй авто. Вызывай в меню пункт /my_command и да будет тебе счастье.", cancellationToken: token);
+                            await ThirdMsgAfterRegister(message, token, _userList[message.From.Id].Name);
                         }
                         else
                         {
                             await SendMsgUnknowUser(message, message.Chat.Id, token);
-
-                            //await _bot.SendTextMessageAsync(message.Chat.Id, "Хули тыкаешь?! Жди пока зарегают", cancellationToken: token);
                         }
-                        break;
-
-                    case "/my_command":
-
-                        await _bot.SendTextMessageAsync(message.Chat.Id, "Жми /book чтобы забронировать авто, сдать авто, или посмотреть какое авто у тебя не сдано.", cancellationToken: token);
-                        await _bot.SendTextMessageAsync(message.Chat.Id, "Жми /report чтобы сдать отчетность.", cancellationToken: token);
-
-                        Console.WriteLine("Тут надо нарисовать кнопочки бронирования авто.");
-
-                        break;
-
-                    case "/help":
-                        await _bot.SendTextMessageAsync(message.Chat.Id, "Что тебе надо старче?", cancellationToken: token);
-                        await Pause.Wait(1000);
-                        await _bot.SendTextMessageAsync(message.Chat.Id, $"Задавай свои вопросы админу. {DialogData.HELP_MSG_DEFAULT}", cancellationToken: token);
-                        var admin = _adminList.Values.FirstOrDefault();
-
-                        if (admin != null && !string.IsNullOrEmpty(admin.Phone))
-                        {
-                            await _bot.SendTextMessageAsync(message.Chat.Id, $"Вот тебе телефон менеджера - {admin?.Phone}", cancellationToken: token);
-                        }
-
-
                         break;
 
                     case "/contacts":
                         await _bot.SendTextMessageAsync(message.Chat.Id, DialogData.CONTACTS_MSG_DEFAULT, cancellationToken: token);
-
                         break;
+
+                    default:
+                        await _bot.SendTextMessageAsync(message.Chat.Id, "Однажды здесь появиться такой раздел..", cancellationToken: token);
+                        break;
+
+
                 }
             }
         }
 
         private async Task SendMsgUnknowUser(Message message, long userId, CancellationToken canToken)
         {
-            await _bot.SendTextMessageAsync(message.Chat.Id, string.Format(DialogData.WELCOME_MESSAGE_TEMPLATE, message.From.Username, userId));
-            await MsgHasReceived(message, canToken);
+            if (_userList.ContainsKey(userId))
+            {
+                var user = _userList[userId];
+                user.Name = message.Text;
+                await _databaseService.AddUserAsync(user);
+
+                await _bot.SendTextMessageAsync(message.Chat.Id, $"Приятно познакомиться {user.Name}");
+                await Pause.Wait(1000);
+                await _bot.SendTextMessageAsync(message.Chat.Id, $"Если что, ты всегда можешь поменя имя позже...");
+            }
+            else
+            {
+                await _bot.SendTextMessageAsync(message.Chat.Id, string.Format(DialogData.FIRST_MESSAGE, message.From?.Username, userId));
+                await Pause.Wait(3000);
+                await _bot.SendTextMessageAsync(message.Chat.Id, string.Format(DialogData.SECOND_MESSAGE, message.From?.Username, userId));
+                await _createTempUser(message.From);
+            }
+        }
+
+        private async Task _createTempUser(User? from)
+        {
+            AppUser newUser = new AppUser()
+            {
+                Id = from?.Id ?? 0,
+                TelegramUsername = from?.Username,
+            };
+
+            await _databaseService.AddUserAsync(newUser);
+
+            _userList.Add(newUser.Id, newUser);
         }
 
         private async Task MsgHasReceived(Message message, CancellationToken canToken)
@@ -357,48 +328,167 @@ namespace WORLDGAMDEVELOPMENT
             await _bot.SendTextMessageAsync(message.Chat.Id, DialogData.YOUR_MESSAGE_HAS_BEEN_RECEIVED, cancellationToken: canToken);
         }
 
-        private async Task HandleCallBackQuery(CallbackQuery callbackQuery)
+        private async Task HandleCallBackQuery(CallbackQuery callbackQuery, CancellationToken cancellationToken)
         {
             if (callbackQuery.Data is not { } data) return;
-            Console.WriteLine($"Наша кнопка {data}");
+            Console.WriteLine($"Нажата кнопка {data}");
+            ChatId chatId = callbackQuery.Message?.Chat.Id;
 
             switch (data)
             {
-                case "accept_car":
-
-                    if (_buttonMsgId.TryGetValue(data, out var msgId))
+                case "Gurdini":
+                    if (_buttonMsgId.TryGetValue("productSelection", out var _gurdini))
                     {
-                        await _bot.DeleteMessageAsync(callbackQuery.Message?.Chat.Id, msgId);
+                        await _bot.DeleteMessageAsync(chatId, _gurdini);
                     }
-                    await _bot.SendTextMessageAsync(callbackQuery.Message?.Chat.Id, "Введите номер авто в формате x999xx");
-
-
+                    InlineKeyboardMarkup replyMarkup = _switchGurdiniOctaButtons(chatId);
+                    await _whatsYourProblem(chatId, replyMarkup: replyMarkup, cancellationToken);
                     break;
 
-                case "car_selected_car_1":
-                    Console.WriteLine("car_selected_car_1");
-                    if (_buttonMsgId.TryGetValue(data, out var car_selected_car_1))
-                    {
-                        await _bot.DeleteMessageAsync(callbackQuery.Message?.Chat.Id, car_selected_car_1);
-                    }
+                case "LOW_CAPACITY":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.LOW_CAPACITY);
                     break;
-                case "car_selected_car_2":
-                    Console.WriteLine("car_selected_car_2");
-                    if (_buttonMsgId.TryGetValue(data, out var car_selected_car_2))
-                    {
-                        await _bot.DeleteMessageAsync(callbackQuery.Message?.Chat.Id, car_selected_car_2);
-                    }
+                case "RETURN_PROCESS":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.RETURN_PROCESS);
                     break;
-                case "car_selected_car_3":
-                    Console.WriteLine("car_selected_car_3");
-                    if (_buttonMsgId.TryGetValue(data, out var car_selected_car_3))
-                    {
-                        await _bot.DeleteMessageAsync(callbackQuery.Message?.Chat.Id, car_selected_car_3);
-                    }
+                case "SLOW_CHARGING":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING);
                     break;
+                case "NOT_CHARGING_POWERBANK":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.NOT_CHARGING_POWERBANK);
+                    break;
+                case "MISSING_CABLE":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.MISSING_CABLE);
+                    break;
+                case "SLOW_CHARGING_DEVICE":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING_DEVICE);
+                    break;
+                case "SMALL_CAPACITY_AKB":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.SMALL_CAPACITY_AKB);
+                    break;
+                case "DONT_CHARGE_GADGET":
+                    await _deleteMsgWhatProblemGurdini(chatId);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.DONT_CHARGE_GADGET);
+                    break;
+
+                case "CarplayAdapter":
+                    if (_buttonMsgId.TryGetValue("productSelection", out var _carplayAdapter))
+                    {
+                        await _bot.DeleteMessageAsync(chatId, _carplayAdapter);
+                    }
+
+                    InlineKeyboardMarkup replyMarkupCarplayAdapter = _switchCarplayAdapterthreeButtons(chatId);
+                    var changeModel = await _bot.SendTextMessageAsync(chatId, "Выберите модель", replyMarkup: replyMarkupCarplayAdapter);
+                    _buttonMsgId["changeModelCarplayAdapter"] = changeModel.MessageId;
+                    break;
+
+                    // Вот тут не стыковки...
+                case "carplayButton":
+                    await _deleteMsgCarplayAdapter(chatId, "changeModelCarplayAdapter");
+                    await _bot.SendTextMessageAsync(chatId, DialogData.NOT_WORKING);
+                    break;
+                case "carplayAndroidAutoButton":
+                    await _deleteMsgCarplayAdapter(chatId, "changeModelCarplayAdapter");
+                    await _bot.SendTextMessageAsync(chatId, DialogData.STOPPED_WORKING);
+                    break;
+                case "Carplay2In1Button":
+                    await _deleteMsgCarplayAdapter(chatId, "changeModelCarplayAdapter");
+                    await _bot.SendTextMessageAsync(chatId, DialogData.CANT_FIND_BLUETOOTH);
+                    break;
+
 
             }
         }
 
+        private async Task _deleteMsgCarplayAdapter(ChatId? chatId, string msgKey)
+        {
+            if (chatId == null) return;
+
+            if (_buttonMsgId.TryGetValue(msgKey, out var _msgKValue))
+            {
+                await _bot.DeleteMessageAsync(chatId, _msgKValue);
+            }
+            await Pause.Wait();
+        }
+
+        private InlineKeyboardMarkup _switchCarplayAdapterthreeButtons(ChatId? chatId)
+        {
+            var replyMarkup = new InlineKeyboardMarkup(new[]
+           {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Carplay", "carplayButton"),
+                    InlineKeyboardButton.WithCallbackData("Android auto", "carplayAndroidAutoButton"),
+                },
+                [
+                    InlineKeyboardButton.WithCallbackData("Адптер 2in1 Carplay Android Auto ", "Carplay2In1Button"),
+                ],
+            });
+
+            return replyMarkup;
+        }
+
+        private async Task _deleteMsgWhatProblemGurdini(ChatId chatId)
+        {
+            if (_buttonMsgId.TryGetValue("whatsYourProblem", out var _whatsYourProblem))
+            {
+                await _bot.DeleteMessageAsync(chatId, _whatsYourProblem);
+            }
+            await Pause.Wait();
+        }
+
+        private InlineKeyboardMarkup _switchGurdiniOctaButtons(ChatId? chatId)
+        {
+            var replyMarkup = new InlineKeyboardMarkup(new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Не заряжает гаджеты", "DONT_CHARGE_GADGET"),
+                    InlineKeyboardButton.WithCallbackData("Маленьĸая емĸость у нового аĸĸумулятора", "LOW_CAPACITY"),
+
+                },
+                [
+                    InlineKeyboardButton.WithCallbackData("оформить возврат", "RETURN_PROCESS"),
+                    InlineKeyboardButton.WithCallbackData("долго заряжается сам АКБ", "SLOW_CHARGING"),
+
+                ],
+                [
+                    InlineKeyboardButton.WithCallbackData("не заряжается powerbank", "NOT_CHARGING_POWERBANK"),
+                    InlineKeyboardButton.WithCallbackData("нет ĸабеля в ĸомплеĸте", "MISSING_CABLE"),
+                ],
+                [
+                    InlineKeyboardButton.WithCallbackData("медленно дает заряд ", "SLOW_CHARGING_DEVICE"),
+                    InlineKeyboardButton.WithCallbackData("маленьĸая емĸость АКБ ", "SMALL_CAPACITY_AKB"),
+                ],
+
+            });
+
+            return replyMarkup;
+        }
+
+        private async Task _whatsYourProblem(ChatId? chatId, InlineKeyboardMarkup replyMarkup, CancellationToken canToken)
+        {
+            var msgProblem = await _bot.SendTextMessageAsync(chatId, DialogData.WHATS_YOUR_PROBLEM,
+                replyMarkup: replyMarkup, cancellationToken: canToken);
+
+            _buttonMsgId["whatsYourProblem"] = msgProblem.MessageId;
+            await Pause.Wait();
+        }
+
+        public bool IsCanHadle(long userId)
+        {
+            if (!_adminList.ContainsKey(userId))
+            {
+                return true;
+            }
+            return false;
+        }
     }
 }

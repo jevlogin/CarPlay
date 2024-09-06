@@ -8,7 +8,6 @@ namespace WORLDGAMDEVELOPMENT
         public Task HandlePollingErrorAsync(Exception exception, CancellationToken cancellationToken);
 
         public Task HandleUpdateAsync(Update update, CancellationToken cancellationToken);
-        public bool IsCanHandle(long userId);
-
+        bool IsCanHadle(long userId);
     }
 }
