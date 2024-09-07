@@ -54,6 +54,33 @@ namespace WORLDGAMDEVELOPMENT
                 Console.WriteLine($"Error DataBase Migrate: {ex}");
                 throw;
             }
+            await AddFirstAdminAsync();
+        }
+
+        private async Task AddFirstAdminAsync()
+        {
+            var firstAdmin = await _dbContext.Users.FindAsync(_appConfig.FirstAdmin);
+            if (firstAdmin == null)
+            {
+                var newAdmin = new AppUser
+                {
+                    Id = _appConfig.FirstAdmin,
+                    IsAdmin = true,
+                    FirstName = "Administrator"
+                };
+                _dbContext.Users.Add(newAdmin);
+                Console.WriteLine($"Пользователь с Id {newAdmin.Id} был добавлен как Администратор.");
+                await _dbContext.SaveChangesAsync();
+            }
+            else
+            {
+                if (!firstAdmin.IsAdmin)
+                {
+                    firstAdmin.IsAdmin = true;
+                    _dbContext.Entry(firstAdmin).CurrentValues.SetValues(firstAdmin); 
+                }
+                await _dbContext.SaveChangesAsync();
+            }
         }
 
         internal async Task AddUserAsync(AppUser user)
@@ -69,6 +96,22 @@ namespace WORLDGAMDEVELOPMENT
             }
 
             await _dbContext.SaveChangesAsync();
+        }
+
+        internal async Task<Dictionary<long, AppUser>> LoadAdminListAsync()
+        {
+            try
+            {
+                var tempAdmin = await _dbContext.Users
+                    .Where(admin => admin.IsAdmin)
+                    .ToDictionaryAsync(admin => admin.Id, admin => admin);
+                return tempAdmin ?? [];
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error DataBase LoadAdmin: {ex}");
+                throw;
+            }
         }
 
         #endregion

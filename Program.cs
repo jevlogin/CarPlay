@@ -23,7 +23,7 @@ namespace WORLDGAMDEVELOPMENT
                 await databaseService.MigrateAsync();
 
                 var userList = await databaseService.LoadUserListAsync();
-                Dictionary<long, AppUser> adminList = new();
+                Dictionary<long, AppUser> adminList = await databaseService.LoadAdminListAsync();
 
                 var updateDispatcher = new UpdateDispatcher();
 
@@ -38,6 +38,7 @@ namespace WORLDGAMDEVELOPMENT
                     cancellationToken: cts.Token);
 
                 IMessageHandler userMessageHandler = new UserMessageHandler(bot, databaseService, userList, adminList);
+                IMessageHandler adminMessageHandler = new AdminMessageHandler(bot, databaseService, userList, adminList);
 
                 updateDispatcher.AddHandler(userMessageHandler);
                 await Console.Out.WriteLineAsync($"Начало работы бота {me.Username}");
@@ -72,17 +73,16 @@ namespace WORLDGAMDEVELOPMENT
 
                     var serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
 
+                    //services.AddDbContext<ApplicationDbContext>(options =>
+                    //    options.UseMySql(connectionDefault, serverVersion));
 
-                    services.AddDbContext<ApplicationDbContext>(options =>
-                        options.UseMySql(connectionDefault, serverVersion));
-
-                    //services.AddDbContext<ApplicationDbContext>(
-                    //    dbContextOptions => dbContextOptions
-                    //        .UseMySql(connectionDefault, serverVersion)
-                    //        .LogTo(Console.WriteLine, LogLevel.Information)
-                    //        .EnableSensitiveDataLogging()
-                    //        .EnableDetailedErrors()
-                    //);
+                    services.AddDbContext<ApplicationDbContext>(
+                        dbContextOptions => dbContextOptions
+                            .UseMySql(connectionDefault, serverVersion)
+                            .LogTo(Console.WriteLine, LogLevel.Information)
+                            .EnableSensitiveDataLogging()
+                            .EnableDetailedErrors()
+                    );
 
                     services.AddSingleton((provider) =>
                     {
