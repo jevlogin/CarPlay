@@ -366,14 +366,12 @@ namespace WORLDGAMDEVELOPMENT
 
                 case "LOW_CAPACITY":
                     await _bot.SendTextMessageAsync(chatId, DialogData.LOW_CAPACITY);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "RETURN_PROCESS":
                     await _bot.SendTextMessageAsync(chatId, DialogData.RETURN_PROCESS);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
@@ -381,42 +379,36 @@ namespace WORLDGAMDEVELOPMENT
                     break;
                 case "SLOW_CHARGING":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "NOT_CHARGING_POWERBANK":
                     await _bot.SendTextMessageAsync(chatId, DialogData.NOT_CHARGING_POWERBANK);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "MISSING_CABLE":
                     await _bot.SendTextMessageAsync(chatId, DialogData.MISSING_CABLE);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "SLOW_CHARGING_DEVICE":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING_DEVICE);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "SMALL_CAPACITY_AKB":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SMALL_CAPACITY_AKB);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
                     await _didOurAnswerHelp(chatId);
 
                     break;
                 case "DONT_CHARGE_GADGET":
                     await _bot.SendTextMessageAsync(chatId, DialogData.DONT_CHARGE_GADGET);
-                    //await _deleteMsgWhatProblemGurdini(chatId);
                     await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
@@ -474,7 +466,7 @@ namespace WORLDGAMDEVELOPMENT
 
                 case "LEAVE_FEEDBACK":
                     await _deleteMessageId(chatId, "OUR_ANSWER_YES");
-                    await _bot.SendTextMessageAsync(chatId, DialogData.LEAVE_FEEDBACK);
+                    await _bot.SendTextMessageAsync(chatId, DialogData.LEAVE_REVIEW);
 
                     break;
 
