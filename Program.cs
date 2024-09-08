@@ -41,6 +41,7 @@ namespace WORLDGAMDEVELOPMENT
                 IMessageHandler adminMessageHandler = new AdminMessageHandler(bot, databaseService, userList, adminList);
 
                 updateDispatcher.AddHandler(userMessageHandler);
+                updateDispatcher.AddHandler(adminMessageHandler);
                 await Console.Out.WriteLineAsync($"Начало работы бота {me.Username}");
             }
 

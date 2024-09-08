@@ -66,7 +66,8 @@ namespace WORLDGAMDEVELOPMENT
                 {
                     Id = _appConfig.FirstAdmin,
                     IsAdmin = true,
-                    FirstName = "Administrator"
+                    IsSuperAdmin = true,
+                    FirstName = $"Admin_{_appConfig.FirstAdmin}"
                 };
                 _dbContext.Users.Add(newAdmin);
                 Console.WriteLine($"Пользователь с Id {newAdmin.Id} был добавлен как Администратор.");
@@ -77,9 +78,9 @@ namespace WORLDGAMDEVELOPMENT
                 if (!firstAdmin.IsAdmin)
                 {
                     firstAdmin.IsAdmin = true;
-                    _dbContext.Entry(firstAdmin).CurrentValues.SetValues(firstAdmin); 
+                    _dbContext.Entry(firstAdmin).CurrentValues.SetValues(firstAdmin);
+                    await _dbContext.SaveChangesAsync();
                 }
-                await _dbContext.SaveChangesAsync();
             }
         }
 
@@ -112,6 +113,28 @@ namespace WORLDGAMDEVELOPMENT
                 Console.WriteLine($"Error DataBase LoadAdmin: {ex}");
                 throw;
             }
+        }
+
+        internal async Task<bool> DeleteUserAsync(AppUser deletedUser)
+        {
+            try
+            {
+                var userInServer = await _dbContext.Users.FindAsync(deletedUser.Id);
+                if (userInServer == null)
+                {
+                    Console.WriteLine("Пользователя нет в БД");
+                    return false;
+                }
+                _dbContext.Users.Remove(userInServer);
+                Console.WriteLine("Пользователь был удален");
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Не получилось удалить пользователя.");
+                return false;
+            }
+            return true;
         }
 
         #endregion

@@ -1,4 +1,5 @@
-﻿using Telegram.Bot;
+﻿using System.Threading;
+using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -18,6 +19,7 @@ namespace WORLDGAMDEVELOPMENT
         private Dictionary<long, AppUser> _userList;
         private Dictionary<string, int> _buttonMsgId = new();
         private AppUser? _currentUser;
+        private bool _isCanQuerry = false;
 
         #endregion
 
@@ -79,6 +81,9 @@ namespace WORLDGAMDEVELOPMENT
                             {
                                 await HandleTextMsgAsync(message, cancellationToken);
                             }
+
+                            if (_isCanQuerry)
+                                _isCanQuerry = false;
                             break;
                         case MessageType.Photo:
                             break;
@@ -218,6 +223,12 @@ namespace WORLDGAMDEVELOPMENT
                 isRegUser = true;
             }
 
+            if (message.ReplyToMessage is { } replyToMessage || _isCanQuerry)
+            {
+                await SendMsgAllAdmins(message.Chat.Id, message.MessageId, canToken);
+                return;
+            }
+
             if (isRegUser)
             {
                 await ThirdMsgAfterRegister(message, canToken, _currentUser?.Name);
@@ -225,6 +236,18 @@ namespace WORLDGAMDEVELOPMENT
             else
             {
                 await SendMsgUnknowUser(message, userId, canToken);
+            }
+        }
+
+        private async Task SendMsgAllAdmins(long chatId, int messageId, CancellationToken canToken)
+        {
+            foreach (var adminId in _adminList.Keys)
+            {
+                await _bot.ForwardMessageAsync(
+                        adminId,
+                        chatId,
+                        messageId,
+                        cancellationToken: canToken);
             }
         }
 
@@ -280,11 +303,15 @@ namespace WORLDGAMDEVELOPMENT
                         await _bot.SendTextMessageAsync(message.Chat.Id, DialogData.CONTACTS_MSG_DEFAULT, cancellationToken: token);
                         break;
 
-                    default:
-                        await _bot.SendTextMessageAsync(message.Chat.Id, "Однажды здесь появиться такой раздел..", cancellationToken: token);
+                    case "/help":
+                        _isCanQuerry = true;
+                        await _bot.SendTextMessageAsync(message.Chat.Id, "Что тебя интересует? Можешь просто написать свой вопрос..");
+
                         break;
 
-
+                    default:
+                        await _bot.SendTextMessageAsync(message.Chat.Id, DialogData.ANY_SOME_COMMANDS, cancellationToken: token);
+                        break;
                 }
             }
         }
@@ -327,7 +354,7 @@ namespace WORLDGAMDEVELOPMENT
         {
             if (callbackQuery.Data is not { } data) return;
             Console.WriteLine($"Нажата кнопка {data}");
-            ChatId chatId = callbackQuery.Message?.Chat.Id;
+            var chatId = callbackQuery.Message?.Chat.Id;
 
             switch (data)
             {
@@ -339,44 +366,59 @@ namespace WORLDGAMDEVELOPMENT
 
                 case "LOW_CAPACITY":
                     await _bot.SendTextMessageAsync(chatId, DialogData.LOW_CAPACITY);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
+
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "RETURN_PROCESS":
                     await _bot.SendTextMessageAsync(chatId, DialogData.RETURN_PROCESS);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
+
                     await _didOurAnswerHelp(chatId);
 
                     break;
                 case "SLOW_CHARGING":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
+
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "NOT_CHARGING_POWERBANK":
                     await _bot.SendTextMessageAsync(chatId, DialogData.NOT_CHARGING_POWERBANK);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
+
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "MISSING_CABLE":
                     await _bot.SendTextMessageAsync(chatId, DialogData.MISSING_CABLE);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
+
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "SLOW_CHARGING_DEVICE":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING_DEVICE);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
+
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "SMALL_CAPACITY_AKB":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SMALL_CAPACITY_AKB);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
                     await _didOurAnswerHelp(chatId);
 
                     break;
                 case "DONT_CHARGE_GADGET":
                     await _bot.SendTextMessageAsync(chatId, DialogData.DONT_CHARGE_GADGET);
-                    await _deleteMsgWhatProblemGurdini(chatId);
+                    //await _deleteMsgWhatProblemGurdini(chatId);
+                    await _deleteMessageId(chatId, "whatsYourProblem");
+
                     await _didOurAnswerHelp(chatId);
 
                     break;
@@ -426,7 +468,8 @@ namespace WORLDGAMDEVELOPMENT
                     await _deleteMessageId(chatId, "DID_OUR_ANSWER");
                     await _bot.SendTextMessageAsync(chatId, string.Format(DialogData.DID_OUR_ANSWERS_NO, _currentUser?.Name));
                     await Pause.Wait(500);
-                    await _bot.SendTextMessageAsync(chatId, DialogData.YOUR_MESSAGE_HAS_BEEN_RECEIVED);
+                    await _userHaveAnyQuerry(callbackQuery, chatId);
+
                     break;
 
                 case "LEAVE_FEEDBACK":
@@ -434,12 +477,26 @@ namespace WORLDGAMDEVELOPMENT
                     await _bot.SendTextMessageAsync(chatId, DialogData.LEAVE_FEEDBACK);
 
                     break;
-                
+
                 case "CONTACT_SUPPORT":
                     await _deleteMessageId(chatId, "OUR_ANSWER_YES");
-                    await _bot.SendTextMessageAsync(chatId, DialogData.YOUR_MESSAGE_HAS_BEEN_RECEIVED);
-
+                    await _userHaveAnyQuerry(callbackQuery, chatId);
                     break;
+            }
+        }
+
+        private async Task _userHaveAnyQuerry(CallbackQuery callbackQuery, long? chatId)
+        {
+            _isCanQuerry = true;
+            if (chatId is not { } id) return;
+            AppUser? user;
+            if (_userList.TryGetValue(id, out user))
+            {
+                foreach (var admin in _adminList.Values)
+                {
+                    await _bot.SendTextMessageAsync(chatId, "Задай свой вопрос");
+                    await _bot.SendTextMessageAsync(admin.Id, $"Пользователь {user.Name} собирается задать вопрос.");
+                }
             }
         }
 
@@ -523,15 +580,6 @@ namespace WORLDGAMDEVELOPMENT
             return replyMarkup;
         }
 
-        private async Task _deleteMsgWhatProblemGurdini(ChatId chatId)
-        {
-            if (_buttonMsgId.TryGetValue("whatsYourProblem", out var _whatsYourProblem))
-            {
-                await _bot.DeleteMessageAsync(chatId, _whatsYourProblem);
-            }
-            await Pause.Wait();
-        }
-
         private InlineKeyboardMarkup _switchGurdiniOctaButtons(ChatId? chatId)
         {
             var replyMarkup = new InlineKeyboardMarkup(new[]
@@ -567,7 +615,7 @@ namespace WORLDGAMDEVELOPMENT
                 replyMarkup: replyMarkup, cancellationToken: canToken);
 
             _buttonMsgId["whatsYourProblem"] = msgProblem.MessageId;
-            await Pause.Wait();
+            await Pause.Wait(500);
         }
 
         public bool IsCanHadle(long userId)

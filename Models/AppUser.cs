@@ -15,6 +15,7 @@ namespace WORLDGAMDEVELOPMENT
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public bool IsAdmin { get; set; } = false;
+        public bool IsSuperAdmin { get; set; } = false;
 
         #endregion
 
