@@ -93,16 +93,7 @@ namespace WORLDGAMDEVELOPMENT
         private async Task HandleCallBackQuery(CallbackQuery callbackQuery, CancellationToken cancellationToken)
         {
             var callbackData = callbackQuery.Data;
-
-            // Проверка, является ли обратный вызов ответом на сообщение
-            if (callbackData.StartsWith("reply_"))
-            {
-                // Извлечение идентификатора пользователя из callback_data
-                var userId = callbackData.Substring(6);
-
-                await _bot.SendTextMessageAsync(userId, "Что ты хочешь Гений?");
-
-            }
+            
         }
 
         private async void _switchMessageType(Message message, CancellationToken cancellationToken)
@@ -334,7 +325,7 @@ namespace WORLDGAMDEVELOPMENT
             else
             {
                 await _bot.SendTextMessageAsync(id,
-                        "Пожалуйста введите корректные данные:\n\n[ID администратора]",
+                        "Пожалуйста введите корректные данные:\n\n[ID пользователя]",
                         cancellationToken: cancellationToken);
             }
         }
@@ -383,7 +374,7 @@ namespace WORLDGAMDEVELOPMENT
                 else
                 {
                     await _bot.SendTextMessageAsync(id,
-                        "Пожалуйста введите корректные данные:\n\n[ID администратора] + [Имя администратора]",
+                        "Пожалуйста введите корректные данные:\n\n[ID пользователя] + [Имя пользователя]",
                         cancellationToken: cancellationToken);
                 }
             }
