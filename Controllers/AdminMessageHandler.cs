@@ -381,13 +381,17 @@ namespace WORLDGAMDEVELOPMENT
                         {
                             user.IsAdmin = true;
                             await _db.AddUserAsync(user);
+                            _userList.Remove(userId);
                         }
                         else
                         {
-                            _adminList[userId] = new AppUser { Id = userId, IsAdmin = true, FirstName = name };
-                            await _db.AddUserAsync(_adminList[userId]);
+                            AppUser newAdmin  = new AppUser { Id = userId, IsAdmin = true, FirstName = name };
+                            await _db.AddUserAsync(newAdmin);
+                            _adminList.Add(newAdmin.Id, newAdmin);
                         }
-                        await _bot.SendTextMessageAsync(id, $"Пользователь - ${name} был успешно назначен Администратором.");
+
+
+                        await _bot.SendTextMessageAsync(id, $"Пользователь - {name} был успешно назначен Администратором.");
                     }
                     catch (Exception ex)
                     {
