@@ -17,7 +17,7 @@ namespace WORLDGAMDEVELOPMENT
         private TelegramBotClient _bot;
         private DatabaseService _databaseService;
         private Dictionary<long, AppUser> _userList;
-        private Dictionary<string, int> _buttonMsgId = new();
+        //private Dictionary<string, int> _buttonMsgId = new();
         private AppUser? _currentUser;
         private bool _isCanQuerry = false;
 
@@ -243,6 +243,7 @@ namespace WORLDGAMDEVELOPMENT
         {
             foreach (var adminId in _adminList.Keys)
             {
+                await _bot.SendTextMessageAsync(adminId, $"Пользователь {_userList[chatId].Name}:{_userList[chatId].Id}");
                 await _bot.ForwardMessageAsync(
                         adminId,
                         chatId,
@@ -264,18 +265,18 @@ namespace WORLDGAMDEVELOPMENT
             string msg = string.Format(DialogData.THIRD_MESSAGE, name);
             var msgButton = await _bot.SendTextMessageAsync(message.Chat.Id, msg, replyMarkup: replyMarkup, cancellationToken: canToken);
 
-            _buttonMsgId["productSelection"] = msgButton.MessageId;
+            //_buttonMsgId["productSelection"] = msgButton.MessageId;
 
         }
 
-        private async Task DeleteButtonMessageAsync(ChatId chatId)
-        {
-            if (_buttonMsgId.TryGetValue("productSelection", out int msgId))
-            {
-                await _bot.DeleteMessageAsync(chatId, msgId);
-                _buttonMsgId.Remove("productSelection");
-            }
-        }
+        //private async Task DeleteButtonMessageAsync(ChatId chatId)
+        //{
+        //    if (_buttonMsgId.TryGetValue("productSelection", out int msgId))
+        //    {
+        //        await _bot.DeleteMessageAsync(chatId, msgId);
+        //        _buttonMsgId.Remove("productSelection");
+        //    }
+        //}
 
         private async Task HandleCommandMsgAsync(Message message, CancellationToken token)
         {
@@ -325,13 +326,11 @@ namespace WORLDGAMDEVELOPMENT
                 await _databaseService.AddUserAsync(user);
 
                 await _bot.SendTextMessageAsync(message.Chat.Id, $"Приятно познакомиться {user.Name}");
-                await Pause.Wait(1000);
                 await _bot.SendTextMessageAsync(message.Chat.Id, $"Если что, ты всегда можешь поменя имя позже...");
             }
             else
             {
                 await _bot.SendTextMessageAsync(message.Chat.Id, string.Format(DialogData.FIRST_MESSAGE, message.From?.Username, userId));
-                await Pause.Wait(3000);
                 await _bot.SendTextMessageAsync(message.Chat.Id, string.Format(DialogData.SECOND_MESSAGE, message.From?.Username, userId));
                 await _createTempUser(message.From);
             }
@@ -359,68 +358,68 @@ namespace WORLDGAMDEVELOPMENT
             switch (data)
             {
                 case "Gurdini":
-                    await _deleteMessageId(chatId, "productSelection");
+                    //await _deleteMessageId(chatId, "productSelection");
                     InlineKeyboardMarkup replyMarkup = _switchGurdiniOctaButtons(chatId);
                     await _whatsYourProblem(chatId, replyMarkup: replyMarkup, cancellationToken);
                     break;
 
                 case "LOW_CAPACITY":
                     await _bot.SendTextMessageAsync(chatId, DialogData.LOW_CAPACITY);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "RETURN_PROCESS":
                     await _bot.SendTextMessageAsync(chatId, DialogData.RETURN_PROCESS);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
 
                     break;
                 case "SLOW_CHARGING":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "NOT_CHARGING_POWERBANK":
                     await _bot.SendTextMessageAsync(chatId, DialogData.NOT_CHARGING_POWERBANK);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "MISSING_CABLE":
                     await _bot.SendTextMessageAsync(chatId, DialogData.MISSING_CABLE);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "SLOW_CHARGING_DEVICE":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SLOW_CHARGING_DEVICE);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "SMALL_CAPACITY_AKB":
                     await _bot.SendTextMessageAsync(chatId, DialogData.SMALL_CAPACITY_AKB);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
                     await _didOurAnswerHelp(chatId);
 
                     break;
                 case "DONT_CHARGE_GADGET":
                     await _bot.SendTextMessageAsync(chatId, DialogData.DONT_CHARGE_GADGET);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
 
                     await _didOurAnswerHelp(chatId);
 
                     break;
 
                 case "CarplayAdapter":
-                    await _deleteMessageId(chatId, "productSelection");
+                    //await _deleteMessageId(chatId, "productSelection");
 
                     InlineKeyboardMarkup replyMarkupCarplayAdapter = _switchCarplayAdapterthreeButtons(chatId);
                     var changeModel = await _bot.SendTextMessageAsync(chatId, "Выберите модель", replyMarkup: replyMarkupCarplayAdapter);
-                    _buttonMsgId["changeModelCarplayAdapter"] = changeModel.MessageId;
+                    //_buttonMsgId["changeModelCarplayAdapter"] = changeModel.MessageId;
 
                     break;
 
@@ -429,49 +428,47 @@ namespace WORLDGAMDEVELOPMENT
                 case "carplayButton":
                 case "carplayAndroidAutoButton":
                 case "Carplay2In1Button":
-                    await _deleteMessageId(chatId, "changeModelCarplayAdapter");
+                    //await _deleteMessageId(chatId, "changeModelCarplayAdapter");
                     InlineKeyboardMarkup replyMarkupAnswerButtons = _switchCarplayAdapterAnswerButtons(chatId);
                     await _whatsYourProblem(chatId, replyMarkupAnswerButtons, cancellationToken);
                     break;
 
                 case "NOT_WORKING":
                     await _bot.SendTextMessageAsync(chatId, DialogData.NOT_WORKING);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "STOPPED_WORKING":
                     await _bot.SendTextMessageAsync(chatId, DialogData.STOPPED_WORKING);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
                     await _didOurAnswerHelp(chatId);
                     break;
                 case "CANT_FIND_BLUETOOTH":
                     await _bot.SendTextMessageAsync(chatId, DialogData.CANT_FIND_BLUETOOTH);
-                    await _deleteMessageId(chatId, "whatsYourProblem");
+                    //await _deleteMessageId(chatId, "whatsYourProblem");
                     await _didOurAnswerHelp(chatId);
                     break;
 
 
                 case "DID_OUR_ANSWER_YES":
-                    await _deleteMessageId(chatId, "DID_OUR_ANSWER");
-                    await Pause.Wait(500);
+                    //await _deleteMessageId(chatId, "DID_OUR_ANSWER");
                     await _afterOurAnswerYes(chatId);
                     break;
                 case "DID_OUR_ANSWER_NO":
-                    await _deleteMessageId(chatId, "DID_OUR_ANSWER");
+                    //await _deleteMessageId(chatId, "DID_OUR_ANSWER");
                     await _bot.SendTextMessageAsync(chatId, string.Format(DialogData.DID_OUR_ANSWERS_NO, _currentUser?.Name));
-                    await Pause.Wait(500);
                     await _userHaveAnyQuerry(callbackQuery, chatId);
 
                     break;
 
                 case "LEAVE_FEEDBACK":
-                    await _deleteMessageId(chatId, "OUR_ANSWER_YES");
+                    //await _deleteMessageId(chatId, "OUR_ANSWER_YES");
                     await _bot.SendTextMessageAsync(chatId, DialogData.LEAVE_REVIEW);
 
                     break;
 
                 case "CONTACT_SUPPORT":
-                    await _deleteMessageId(chatId, "OUR_ANSWER_YES");
+                    //await _deleteMessageId(chatId, "OUR_ANSWER_YES");
                     await _userHaveAnyQuerry(callbackQuery, chatId);
                     break;
             }
@@ -487,7 +484,7 @@ namespace WORLDGAMDEVELOPMENT
                 foreach (var admin in _adminList.Values)
                 {
                     await _bot.SendTextMessageAsync(chatId, "Задай свой вопрос");
-                    await _bot.SendTextMessageAsync(admin.Id, $"Пользователь {user.Name} собирается задать вопрос.");
+                    await _bot.SendTextMessageAsync(admin.Id, $"Пользователь {user.Name}-{user.Id} собирается задать вопрос.");
                 }
             }
         }
@@ -503,7 +500,7 @@ namespace WORLDGAMDEVELOPMENT
                 },
             });
             var didOAYMsg = await _bot.SendTextMessageAsync(chatId, string.Format(DialogData.DID_OUR_ANSWERS_YES, _currentUser?.Name), replyMarkup: replyOAY);
-            _buttonMsgId["OUR_ANSWER_YES"] = didOAYMsg.MessageId;
+            //_buttonMsgId["OUR_ANSWER_YES"] = didOAYMsg.MessageId;
         }
 
         private async Task _didOurAnswerHelp(ChatId chatId)
@@ -517,7 +514,7 @@ namespace WORLDGAMDEVELOPMENT
                 },
             });
             var didOurAnswerMsg = await _bot.SendTextMessageAsync(chatId, string.Format(DialogData.DID_OUR_ANSWERS_HELP, _currentUser?.Name), replyMarkup: replyM_DOA);
-            _buttonMsgId["DID_OUR_ANSWER"] = didOurAnswerMsg.MessageId;
+            //_buttonMsgId["DID_OUR_ANSWER"] = didOurAnswerMsg.MessageId;
         }
 
         private InlineKeyboardMarkup _switchCarplayAdapterAnswerButtons(ChatId? chatId)
@@ -544,16 +541,15 @@ namespace WORLDGAMDEVELOPMENT
         /// <param name="chatId">Chat Id From</param>
         /// <param name="msgKey">A set of buttons from Dict</param>
         /// <returns></returns>
-        private async Task _deleteMessageId(ChatId? chatId, string msgKey)
-        {
-            if (chatId == null) return;
+        //private async Task _deleteMessageId(ChatId? chatId, string msgKey)
+        //{
+        //    if (chatId == null) return;
 
-            if (_buttonMsgId.TryGetValue(msgKey, out var _msgKValue))
-            {
-                await _bot.DeleteMessageAsync(chatId, _msgKValue);
-            }
-            await Pause.Wait(500);
-        }
+        //    //if (_buttonMsgId.TryGetValue(msgKey, out var _msgKValue))
+        //    //{
+        //    //    await _bot.DeleteMessageAsync(chatId, _msgKValue);
+        //    //}
+        //}
 
         private InlineKeyboardMarkup _switchCarplayAdapterthreeButtons(ChatId? chatId)
         {
@@ -606,8 +602,7 @@ namespace WORLDGAMDEVELOPMENT
             var msgProblem = await _bot.SendTextMessageAsync(chatId, DialogData.WHATS_YOUR_PROBLEM,
                 replyMarkup: replyMarkup, cancellationToken: canToken);
 
-            _buttonMsgId["whatsYourProblem"] = msgProblem.MessageId;
-            await Pause.Wait(500);
+            //_buttonMsgId["whatsYourProblem"] = msgProblem.MessageId;
         }
 
         public bool IsCanHadle(long userId)

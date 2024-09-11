@@ -96,6 +96,23 @@ namespace WORLDGAMDEVELOPMENT
             
         }
 
+        
+
+
+        public bool IsCanHadle(long userId)
+        {
+            if (_adminList.ContainsKey(userId))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
+
+
+        #region Methods
+
         private async void _switchMessageType(Message message, CancellationToken cancellationToken)
         {
             switch (message.Type)
@@ -217,8 +234,12 @@ namespace WORLDGAMDEVELOPMENT
                 if (replyToMessage.ForwardFrom is { } forwardFrom && forwardFrom.Id != _bot.BotId)
                 {
                     var userId = forwardFrom.Id;
-                    var adminName = message.From.FirstName;
-                    var msgText = $"<b>{adminName}</b>: <i>{text}</i>";
+                    var userFromServer = message.From;
+                    
+                    var userLocal = _userList[userId];
+
+                    //var msgText = $"<b>{currentAdmin.Name}:{currentAdmin.Id}</b>: {userLocal.Name}:{userLocal.Id} - <i>{text}</i>";
+                    var msgText = $"<b>{currentAdmin.Name}</b>:\n\n{userLocal.Name}:{userLocal.Id} - <i>{text}</i>";
 
                     try
                     {
@@ -237,6 +258,7 @@ namespace WORLDGAMDEVELOPMENT
                 return;
             }
         }
+
 
         private async Task HandleCommandAsync(Message message, string text, CancellationToken cancellationToken)
         {
@@ -315,7 +337,8 @@ namespace WORLDGAMDEVELOPMENT
                     if (deletedUser.IsAdmin)
                     {
                         _adminList.Remove(deletedUser.Id);
-                    } else
+                    }
+                    else
                     {
                         _userList.Remove(deletedUser.Id);
                     }
@@ -329,6 +352,7 @@ namespace WORLDGAMDEVELOPMENT
                         cancellationToken: cancellationToken);
             }
         }
+
 
         private async Task _youCantDoIts(long id)
         {
@@ -363,7 +387,6 @@ namespace WORLDGAMDEVELOPMENT
                             _adminList[userId] = new AppUser { Id = userId, IsAdmin = true, FirstName = name };
                             await _db.AddUserAsync(_adminList[userId]);
                         }
-                        await Pause.Wait(2000);
                         await _bot.SendTextMessageAsync(id, $"Пользователь - ${name} был успешно назначен Администратором.");
                     }
                     catch (Exception ex)
@@ -379,29 +402,11 @@ namespace WORLDGAMDEVELOPMENT
                 }
             }
         }
-
         private async Task _welcomeAdmin(long chatId, AppUser currentAdmin)
         {
             var adminName = !string.IsNullOrEmpty(currentAdmin.FirstName) ? currentAdmin.FirstName : currentAdmin.Name;
             await _bot.SendTextMessageAsync(chatId, $"Приветствую тебя {adminName}\n\nТы управляешь этим чатом.");
         }
-
-        public bool IsCanHadle(long userId)
-        {
-            if (_adminList.ContainsKey(userId))
-            {
-                return true;
-            }
-            return false;
-        }
-
-        #endregion
-
-
-        #region Methods
-
-
-
         #endregion
     }
 }
