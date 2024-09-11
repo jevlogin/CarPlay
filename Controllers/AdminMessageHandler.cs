@@ -366,7 +366,24 @@ namespace WORLDGAMDEVELOPMENT
                 if (args.Length > 0)
                 {
                     long userId = long.Parse(args[0]);
-                    string name = !string.IsNullOrEmpty(args[1]) ? args[1] : $"Admin_{userId}";
+                    
+                    AppUser? localUser = null;
+                    
+                    string name = $"Admin_{userId}";
+
+                    if (args.Length > 1)
+                    {
+                        if (args[1] != null && string.IsNullOrEmpty(args[1]))
+                        {
+                            name = args[1];
+                        } 
+                    }
+
+                    if (_userList.TryGetValue(userId, out localUser))
+                    {
+                        name = localUser.Name ?? name;
+                    }
+
 
                     if (_adminList.TryGetValue(userId, out var admin))
                     {
@@ -381,6 +398,7 @@ namespace WORLDGAMDEVELOPMENT
                         {
                             user.IsAdmin = true;
                             await _db.AddUserAsync(user);
+                            _adminList.Add(userId, user);
                             _userList.Remove(userId);
                         }
                         else
