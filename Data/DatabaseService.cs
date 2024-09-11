@@ -62,12 +62,14 @@ namespace WORLDGAMDEVELOPMENT
             var firstAdmin = await _dbContext.Users.FindAsync(_appConfig.FirstAdmin);
             if (firstAdmin == null)
             {
+                var name = $"Admin_{_appConfig.FirstAdmin}";
                 var newAdmin = new AppUser
                 {
                     Id = _appConfig.FirstAdmin,
                     IsAdmin = true,
                     IsSuperAdmin = true,
-                    FirstName = $"Admin_{_appConfig.FirstAdmin}"
+                    Name = name,
+                    FirstName = name,
                 };
                 _dbContext.Users.Add(newAdmin);
                 Console.WriteLine($"Пользователь с Id {newAdmin.Id} был добавлен как Администратор.");
