@@ -22,7 +22,7 @@ namespace WORLDGAMDEVELOPMENT
 
                 await databaseService.MigrateAsync();
 
-                var userList = await databaseService.LoadUserListAsync();
+                Dictionary<long, AppUser> userList = await databaseService.LoadUserListAsync();
                 Dictionary<long, AppUser> adminList = await databaseService.LoadAdminListAsync();
 
                 var updateDispatcher = new UpdateDispatcher();

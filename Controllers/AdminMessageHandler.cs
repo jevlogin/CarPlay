@@ -275,11 +275,7 @@ namespace WORLDGAMDEVELOPMENT
                     await _welcomeAdmin(chatId, currentAdmin);
                     break;
                 case "/commands":
-                    await _bot.SendTextMessageAsync(chatId,
-                         "Вы можете использовать следующие команды:\n\n" +
-                        "/start - Начать общение\n" +
-                        "/deleteuser - Удалить пользователя\n" +
-                        "/addadmin - Добавить администратора\n");
+                    await _bot.SendTextMessageAsync(chatId, DialogData.ADMIN_COMMANDS);
                     break;
                 case "/addadmin":
                     await AddAdminCommandAsync(message, args, cancellationToken);
