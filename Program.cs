@@ -72,14 +72,9 @@ namespace WORLDGAMDEVELOPMENT
                         throw new InvalidOperationException("ConnectionDefault is not set.");
                     }
 
-                    var serverVersion = new MySqlServerVersion(new Version(8, 0, 36));
-
-                    //services.AddDbContext<ApplicationDbContext>(options =>
-                    //    options.UseMySql(connectionDefault, serverVersion));
-
                     services.AddDbContext<ApplicationDbContext>(
                         dbContextOptions => dbContextOptions
-                            .UseMySql(connectionDefault, serverVersion)
+                            .UseMySql(connectionDefault, ServerVersion.AutoDetect(connectionDefault))
                             .LogTo(Console.WriteLine, LogLevel.Information)
                             .EnableSensitiveDataLogging()
                             .EnableDetailedErrors()

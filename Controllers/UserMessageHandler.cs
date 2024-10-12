@@ -1,6 +1,5 @@
 ﻿using CarPlay.Helper;
 using System.Text.RegularExpressions;
-using System.Threading;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -27,9 +26,6 @@ namespace WORLDGAMDEVELOPMENT
         private Dictionary<long, AppUser> _userList;
         private AppUser? _currentUser;
         private bool _isCanQuerry = false;
-        //private TypeCarPlay carPlayType = TypeCarPlay.None;
-        //private AreaType _areaType = AreaType.None;
-
         private Dictionary<long, UserTypeAnswer> _listUsersType = [];
 
         #endregion
