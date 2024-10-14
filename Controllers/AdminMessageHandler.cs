@@ -239,7 +239,7 @@ namespace WORLDGAMDEVELOPMENT
                     var userLocal = _userList[userId];
 
                     //var msgText = $"<b>{currentAdmin.Name}:{currentAdmin.Id}</b>: {userLocal.Name}:{userLocal.Id} - <i>{text}</i>";
-                    var msgText = $"<b>{currentAdmin.Name}</b>:\n\n{userLocal.Name}:{userLocal.Id} - <i>{text}</i>";
+                    var msgText = $"<b>{currentAdmin.Name}</b>:\n\n<i>{userLocal.Name}, {text}</i>";
 
                     try
                     {

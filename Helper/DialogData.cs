@@ -89,9 +89,9 @@
         public const string CONTACT_SUPPORT = "Связаться с поддержкой";
         #endregion
 
-        public const string CONTACTS_MSG_DEFAULT = "Вы можете спросить интересующий Вас вопрос по телефону +7 986 600 0094. 🐱‍👤";
-        public const string CONTACT_SUPPORT_OZON = "+7 986 600 0094. 🐱‍👤";
-        public const string CONTACT_SUPPORT_WB = "+7 986 600 0094. 🐱‍👤";
+        public const string CONTACTS_MSG_DEFAULT = "Вы можете написать нам @Gurdini_Service";
+        public const string CONTACT_SUPPORT_OZON = "@Gurdini_Service. 🐱‍👤";
+        public const string CONTACT_SUPPORT_WB = "@Gurdini_Service. 🐱‍👤";
         public const string ANY_SOME_COMMANDS = "Однажды, тут появится такой пункт меню";
         public const string SWITCH_AREA = "Выберете на ĸаĸой площадĸе вы совершили поĸупĸу";
 

@@ -25,7 +25,7 @@ namespace WORLDGAMDEVELOPMENT
         private DatabaseService _databaseService;
         private Dictionary<long, AppUser> _userList;
         private AppUser? _currentUser;
-        private bool _isCanQuerry = false;
+        private Dictionary<long, bool> _isCanQuerryList = [];
         private Dictionary<long, UserTypeAnswer> _listUsersType = [];
 
         #endregion
@@ -88,8 +88,14 @@ namespace WORLDGAMDEVELOPMENT
                                 await HandleTextMsgAsync(message, cancellationToken);
                             }
 
-                            if (_isCanQuerry)
-                                _isCanQuerry = false;
+                            if (_userList.TryGetValue(message.Chat.Id, out var localUser))
+                            {
+                                if (_isCanQuerryList.ContainsKey(localUser.Id) && _isCanQuerryList[localUser.Id])
+                                {
+                                    _isCanQuerryList[localUser.Id] = false;
+                                }
+                            }
+
                             break;
                         case MessageType.Photo:
                             break;
@@ -229,7 +235,7 @@ namespace WORLDGAMDEVELOPMENT
                 isRegUser = true;
             }
 
-            if (message.ReplyToMessage is { } replyToMessage || _isCanQuerry)
+            if (message.ReplyToMessage is { } replyToMessage || (_isCanQuerryList.ContainsKey(userId) && _isCanQuerryList[userId]))
             {
                 await SendMsgAllAdmins(message.Chat.Id, message.MessageId, canToken);
                 return;
@@ -299,12 +305,12 @@ namespace WORLDGAMDEVELOPMENT
                         break;
 
                     case "/help":
-                        _isCanQuerry = true;
+                        _isCanQuerryList[userId] = true;
                         await _bot.SendTextMessageAsync(message.Chat.Id, "Что тебя интересует? Можешь просто написать свой вопрос..");
 
                         break;
                     case "/commands":
-                        await _bot.SendTextMessageAsync(message.Chat.Id, DialogData.USER_COMMANDS); 
+                        await _bot.SendTextMessageAsync(message.Chat.Id, DialogData.USER_COMMANDS);
                         break;
 
                     default:
@@ -586,8 +592,8 @@ namespace WORLDGAMDEVELOPMENT
 
         private async Task _userHaveAnyQuerry(CallbackQuery callbackQuery, long? chatId, CancellationToken cToken)
         {
-            _isCanQuerry = true;
             if (chatId is not { } id) return;
+            _isCanQuerryList[id] = true;
 
 
             await _bot.SendTextMessageAsync(id, "Задай свой вопрос...");
@@ -601,10 +607,10 @@ namespace WORLDGAMDEVELOPMENT
             switch (areaType)
             {
                 case AreaType.Ozon:
-                    await _bot.SendTextMessageAsync(id, $"Вот номер администратора {DialogData.CONTACT_SUPPORT_OZON}, если Вам не успеют ответить в чате, можете позвонить.");
+                    await _bot.SendTextMessageAsync(id, $"Для связи с администратором {DialogData.CONTACT_SUPPORT_OZON}, если Вам не успеют ответить в чате, можете написать сами.");
                     break;
                 case AreaType.Wildberries:
-                    await _bot.SendTextMessageAsync(id, $"Вот номер администратора {DialogData.CONTACT_SUPPORT_WB}, если Вам не успеют ответить в чате, можете позвонить.");
+                    await _bot.SendTextMessageAsync(id, $"Для связи с администратором {DialogData.CONTACT_SUPPORT_WB}, если Вам не успеют ответить в чате, можете написать сами.");
                     break;
             }
             AppUser? user;
